@@ -22,6 +22,45 @@ namespace SongIdentify_Winform
             t_watcher.IsBackground = true; 
             t_watcher.Start();
         }
+        public String returnName() {
+            int sessionCnt = 0;
+            string name = "No Playback";
+            foreach (AudioSession item in AudioUtilities.GetAllSessions())
+            {
+                if (item.Process == null)
+                {
+                    item.Dispose();
+                    continue;
+                }
+                //if audio playback active.
+                if (item.State == AudioSessionState.Active)
+                {
+                    if (item.Process.ProcessName.Equals("spotify", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        name=item.Process.MainWindowTitle;
+                    }
+                    else if (item.Process.ProcessName.Equals("foobar2000", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        //UpdateLabel_T(item.Process.MainWindowTitle.Replace("[foobar2000]", ""));
+                        name=item.Process.MainWindowTitle.Substring(0, item.Process.MainWindowTitle.Length - 12);
+                    }
+                    else if (item.Process.ProcessName.Equals("vlc", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        name=item.Process.MainWindowTitle.Substring(0, item.Process.MainWindowTitle.Length - 19);
+                    }
+                    else if (item.Process.ProcessName.Equals("nvcontainer", StringComparison.InvariantCultureIgnoreCase)) // nvidia gfe screen recording.
+                    {
+                        sessionCnt -= 1;
+                    }
+                    else
+                    {
+                        name=item.Process.MainWindowTitle;
+                    }
+                }
+                item.Dispose();
+            }
+            return name;
+        }
 
         /// <summary>
         /// Background thread that monitors running audio session & update labeltext.
@@ -42,7 +81,8 @@ namespace SongIdentify_Winform
                     //if audio playback active.
                     if (item.State == AudioSessionState.Active)
                     {
-                        sessionCnt += 1;                        
+                        System.Diagnostics.Debug.WriteLine(item.Process.ProcessName + "\t" + item.Process.MainWindowTitle);
+                        sessionCnt += 1;
                         if (item.Process.ProcessName.Equals("spotify", StringComparison.InvariantCultureIgnoreCase))
                         {
                             UpdateLabel_T(item.Process.MainWindowTitle);
@@ -55,10 +95,14 @@ namespace SongIdentify_Winform
                         else if (item.Process.ProcessName.Equals("vlc", StringComparison.InvariantCultureIgnoreCase))
                         {
                             UpdateLabel_T(item.Process.MainWindowTitle.Substring(0, item.Process.MainWindowTitle.Length - 19));
-                        }                        
-                        else if(item.Process.ProcessName.Equals("nvcontainer", StringComparison.InvariantCultureIgnoreCase)) // nvidia gfe screen recording.
+                        }
+                        else if (item.Process.ProcessName.Equals("nvcontainer", StringComparison.InvariantCultureIgnoreCase)) // nvidia gfe screen recording.
                         {
                             sessionCnt -= 1;
+                        }
+                        else
+                        {
+                            UpdateLabel_T(item.Process.MainWindowTitle);
                         }
                     }
                     item.Dispose();
